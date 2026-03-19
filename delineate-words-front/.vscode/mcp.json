@@ -1,0 +1,22 @@
+{
+  "servers": {
+    "acemcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "acemcp-node"
+      ],
+      "env": {}
+    },
+    "sequentialThinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {}
+    }
+  }
+}

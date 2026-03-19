@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 顾问助手</title>
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            color-scheme: light;
+            --bg-1: #eef4ff;
+            --bg-2: #f8fafc;
+            --card: rgba(255, 255, 255, 0.92);
+            --line: rgba(148, 163, 184, 0.24);
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --danger: #dc2626;
+            --ok: #0f766e;
+            --shadow: 0 18px 50px rgba(15, 23, 42, 0.10);
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            color: var(--text);
+        }
+        .page {
+            max-width: 980px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 28px 16px 32px;
+        }
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            line-height: 1.2;
+        }
+        .hero p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .status-card {
+            width: 280px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: var(--shadow);
+        }
+        .status-label { color: var(--muted); font-size: 12px; }
+        .status-value { margin-top: 6px; font-size: 13px; font-family: Consolas, monospace; color: var(--primary); }
+        .chat-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .chat-status {
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+        }
+        .chat-status.error {
+            background: rgba(220, 38, 38, 0.10);
+            color: var(--danger);
+        }
+        .messages {
+            min-height: 440px;
+            max-height: 64vh;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .message { max-width: 84%; display: flex; flex-direction: column; gap: 6px; }
+        .message.user { align-self: flex-end; }
+        .message.bot { align-self: flex-start; }
+        .message-label { font-size: 12px; color: var(--muted); padding: 0 4px; }
+        .bubble {
+            border-radius: 18px;
+            padding: 14px 16px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .message.user .bubble {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: #fff;
+            border-bottom-right-radius: 8px;
+        }
+        .message.bot .bubble {
+            background: #fff;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-bottom-left-radius: 8px;
+        }
+        .composer {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            max-height: 220px;
+            resize: none;
+            border-radius: 16px;
+            border: 1px solid #dbe4f0;
+            padding: 14px 16px;
+            font-size: 15px;
+            line-height: 1.65;
+            outline: none;
+            transition: .2s ease;
+            background: #fff;
+            color: var(--text);
+        }
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+        }
+        .send {
+            width: 132px;
+            height: 52px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            cursor: pointer;
+            transition: .2s ease;
+        }
+        .send:hover { transform: translateY(-1px); }
+        .send:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
+        @media (max-width: 760px) {
+            .page { padding: 18px 12px 24px; }
+            .hero { flex-direction: column; }
+            .status-card { width: 100%; }
+            h1 { font-size: 28px; }
+            .composer { flex-direction: column; }
+            .send { width: 100%; }
+            .message { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header class="hero">
+        <div>
+            <h1>AI 顾问助手</h1>
+            <p>纯文本聊天模式，支持流式回复与多会话记忆。</p>
+        </div>
+        <div class="status-card">
+            <div class="status-label">当前会话 ID</div>
+            <div id="memoryIdText" class="status-value">-</div>
+        </div>
+    </header>
+
+    <section class="chat-card">
+        <div id="chatStatusText" class="chat-status">等待你的提问</div>
+        <div id="messages" class="messages"></div>
+        <div class="composer">
+            <textarea id="input" placeholder="输入你的问题，按 Enter 发送，Shift + Enter 换行..."></textarea>
+            <button id="sendButton" class="send" type="button">发送</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    const messages = document.getElementById('messages');
+    const chatStatusText = document.getElementById('chatStatusText');
+    const memoryIdText = document.getElementById('memoryIdText');
+    const input = document.getElementById('input');
+    const sendButton = document.getElementById('sendButton');
+
+    function createMemoryId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    const memoryId = localStorage.getItem('chat-memory-id') || createMemoryId();
+    localStorage.setItem('chat-memory-id', memoryId);
+    memoryIdText.textContent = memoryId;
+
+    function setChatStatus(text, isError = false) {
+        chatStatusText.textContent = text;
+        chatStatusText.classList.toggle('error', isError);
+    }
+
+    function scrollMessagesToBottom() {
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function autoResizeTextarea() {
+        input.style.height = 'auto';
+        input.style.height = `${Math.min(input.scrollHeight, 220)}px`;
+    }
+
+    function appendMessage(content, role) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message ${role}`;
+
+        const label = document.createElement('div');
+        label.className = 'message-label';
+        label.textContent = role === 'user' ? '你' : 'AI 顾问';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = content;
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(bubble);
+        messages.appendChild(wrapper);
+        scrollMessagesToBottom();
+        return { wrapper, bubble };
+    }
+
+    async function safeReadText(response) {
+        try {
+            const raw = (await response.text()).trim();
+            if (!raw) {
+                return '';
+            }
+            try {
+                const payload = JSON.parse(raw);
+                return payload.message || raw;
+            } catch (error) {
+                return raw;
+            }
+        } catch (error) {
+            return '';
+        }
+    }
+
+    async function sendMessage() {
+        const text = input.value.trim();
+        if (!text || sendButton.disabled) {
+            return;
+        }
+
+        appendMessage(text, 'user');
+        input.value = '';
+        autoResizeTextarea();
+        sendButton.disabled = true;
+        setChatStatus('AI 正在思考并生成回复...');
+
+        const botMessage = appendMessage('思考中...', 'bot');
+        let answerText = '';
+        const startTime = performance.now();
+
+        try {
+            const query = new URLSearchParams({ memoryId, message: text }).toString();
+            const response = await fetch(`/chat?${query}`);
+            if (!response.ok || !response.body) {
+                const errorText = await safeReadText(response);
+                throw new Error(errorText || `请求失败：${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            botMessage.bubble.textContent = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+                answerText += decoder.decode(value, { stream: true });
+                botMessage.bubble.textContent = answerText;
+                scrollMessagesToBottom();
+            }
+
+            answerText += decoder.decode();
+            const finalText = answerText.trim() || '暂时没有生成内容，请稍后再试。';
+            botMessage.bubble.textContent = finalText;
+            const duration = ((performance.now() - startTime) / 1000).toFixed(1);
+            setChatStatus(`回复完成，用时 ${duration} 秒`);
+        } catch (error) {
+            botMessage.bubble.textContent = `请求出错：${error.message}`;
+            setChatStatus('本次请求失败', true);
+        } finally {
+            sendButton.disabled = false;
+            input.focus();
+        }
+    }
+
+    appendMessage('你好，我是你的 AI 顾问助手，直接输入问题就可以开始。', 'bot');
+    autoResizeTextarea();
+
+    sendButton.addEventListener('click', sendMessage);
+    input.addEventListener('input', autoResizeTextarea);
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
