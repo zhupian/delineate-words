@@ -1,17 +1,18 @@
-langchain4j:
-  open-ai:
-    chat-model:
-      api-key: ${API-KEY}
-      base-url: https://api.deepseek.com/v1
-      model-name: deepseek-chat
-      log-requests: true
-      log-responses: true
-    streaming-chat-model:
-      api-key: ${API-KEY}
-      base-url: https://api.deepseek.com/v1
-      model-name: deepseek-chat
-      log-requests: true
-      log-responses: true
-logging:
-  level:
-    dev.langchain4j: DEBUG
+spring:
+  application:
+    name: openchat-backed
+  profiles:
+    active: local
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.jiang.delineatewordsbacked.aiservice
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn

@@ -1,4 +1,4 @@
-package com.jiang.delineatewordsbacked.controller;
+package com.jiang.delineatewordsbacked.aiservice;
 
 import com.jiang.delineatewordsbacked.service.ConsultantService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 
 @RestController
-public class ChatController {
+public class ChatGeneratorService {
     @Autowired
     private ConsultantService consultantService;
 
