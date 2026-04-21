@@ -7,8 +7,8 @@ import FeaturePrompts from '@/views/FeaturePrompts.vue'
 import BlacklistSettings from '@/views/BlacklistSettings.vue'
 // 1. 创建路由实例
 const router = createRouter({
-  history: createWebHashHistory(),
-  routes: [
+	history: createWebHashHistory(),
+	routes: [
 		{
 			path: '/',
 			component: Main,
@@ -44,9 +44,7 @@ const router = createRouter({
 				}
 			]
 		}
-  ]
+	]
 })
 
-// 🚨 你的程序崩溃就是因为少了下面这最关键的一行！
-// 必须把它作为默认(default)导出去，main.js 才能接收到！
 export default router
